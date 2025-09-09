@@ -1,0 +1,8 @@
+autograd
+ipython
+numpy
+scipy
+pandas
+pymanopt
+simple-websocket-server
+factor-analyzer

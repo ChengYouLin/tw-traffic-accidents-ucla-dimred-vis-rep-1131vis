@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grouped Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+        text-align: center;
+    }
+    #filters {
+        margin-bottom: 20px;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 90%;
+        margin: 0 auto;
+    }
+    .filter-group-horizontal {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+        .filter-group-horizontal > div > label,
+        .filter-group-vertical > div > label {
+            font-weight: bold; 
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    .filter-group-vertical {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .filter-group-vertical > div {
+        flex: 1;
+    }
+    .filter-group-vertical label {
+        display: block;
+        margin-bottom: 10px;
+        text-align: center;
+        /* font-weight: bold; 移除粗體 */
+    }
+    #accident-types, #factors {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #fafafa;
+    }
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    .button-group button {
+        font-size: 16px;
+    }
+    #chart {
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 95%;
+        overflow-x: auto;
+    }
+    .legend {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 5px;
+        border-radius: 3px;
+        font-size: 12px;
+        pointer-events: none;
+    }
+    #details {
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 95%;
+        text-align: center;
+        font-size: 14px;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    button.reset {
+        background-color: #f44336;
+    }
+    button.reset:hover {
+        background-color: #e53935;
+    }
+</style>
+</head>
+<body>
+
+<h1>Interactive Grouped Bar Chart</h1>
+
+<div id="filters">
+    <!-- First Row: Year, Month, City -->
+    <div class="filter-group-horizontal">
+        <div>
+            <label for="year">年份:</label>
+            <select id="year"></select>
+        </div>
+        <div>
+            <label for="month">月份:</label>
+            <select id="month"></select>
+        </div>
+        <div>
+            <label for="city">縣市:</label>
+            <select id="city"></select>
+        </div>
+    </div>
+
+    <!-- Second Row: Accident Types and Factors -->
+    <div class="filter-group-vertical">
+        <div>
+            <label>車禍種類:　　(請選 1~3 種)</label>
+            <div id="accident-types"></div>
+        </div>
+        <div>
+            <label>影響因子:　　(請選 1~5 項)</label>
+            <div id="factors"></div>
+        </div>
+    </div>
+
+    <!-- Third Row: Buttons -->
+    <div class="button-group">
+        <button id="applyFilters">確認</button>
+        <button class="reset" id="resetFilters">重置</button>
+    </div>
+</div>
+
+<div id="chart" class="chart"></div>
+<div class="legend" id="legend"></div>
+<div id="details"></div>
+<div class="tooltip" id="tooltip" style="display: none;"></div>
+
+<script>
+    const years = [107, 108, 109, 110, 111, 112];
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const cities = ["臺北市", "新北市", "桃園市", "臺中市", "臺南市", "高雄市", "新竹縣", "苗栗縣", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣", "基隆市", "新竹市", "嘉義市"];
+    const accidentTypes = ["撞號誌、標誌桿", "追撞", "衝出路外", "其他", "同向通行中", "側撞", "撞路樹、電桿", "路口交岔撞", "路上翻車、摔倒", "穿越道路中", "撞橋樑、建築物", "同向擦撞", "撞交通島", "對向通行中", "佇立路邊(外)", "對向擦撞", "對撞", "撞護欄(樁", "撞工程施工", "正越過平交道中", "衝進路中", "倒車撞", "撞非固定設施", "撞動物", "在路上作業中", "從停車後(或中)穿出", "在路上嬉戲", "撞收費亭", "衝過(或撞壞)遮斷器"];
+    const factors = ["天候名稱", "光線名稱", "速限.第1當事者", "道路型態子類別名稱", "事故位置子類別名稱", "路面狀況.路面鋪裝名稱", "路面狀況.路面狀態名稱", "道路障礙.視距品質名稱", "號誌.號誌動作名稱", "車道劃分設施.分向設施大類別名稱", "車道劃分設施.分道設施.快慢車道間名稱", "車道劃分設施.分道設施.路面邊線名稱", "當事者事故發生時年齡", "行動電話或電腦或其他相類功能裝置名稱", "鄉鎮"];
+
+    const populateDropdown = (id, options) => {
+        const dropdown = d3.select(`#${id}`);
+        options.forEach(option => {
+            dropdown.append("option").attr("value", option).text(option);
+        });
+    };
+    populateDropdown("year", years);
+    populateDropdown("month", months);
+    populateDropdown("city", cities);
+
+    const populateCheckboxes = (id, options) => {
+        const container = d3.select(`#${id}`);
+        options.forEach(option => {
+            container.append("div")
+                .html(`<label><input type='checkbox' value='${option}'> ${option}</label>`);
+        });
+    };
+    populateCheckboxes("accident-types", accidentTypes);
+    populateCheckboxes("factors", factors);
+
+    const tooltip = d3.select("#tooltip");
+    const details = d3.select("#details");
+
+    const loadAndFilterData = async () => {
+        const year = d3.select("#year").property("value");
+        const month = d3.select("#month").property("value");
+        const city = d3.select("#city").property("value");
+        const selectedAccidents = d3.selectAll("#accident-types input:checked").nodes().map(d => d.value);
+        const selectedFactors = d3.selectAll("#factors input:checked").nodes().map(d => d.value);
+
+        if (selectedAccidents.length === 0 || selectedAccidents.length > 3) {
+            alert("請選擇 1 到 3 個車禍種類！");
+            return;
+        }
+
+        if (selectedFactors.length === 0 || selectedFactors.length > 5) {
+            alert("請選擇 1 到 5 個影響因子！");
+            return;
+        }
+
+        const fileName = `${year}_${month}.csv`;
+
+        const data = await d3.csv(fileName);
+
+        const filteredData = data.filter(d => d["縣市"] === city && selectedAccidents.includes(d["事故類型及型態子類別名稱"]));
+
+        const groupedData = selectedFactors.map(factor => {
+            const counts = d3.rollup(filteredData, v => v.length, d => d[factor]);
+            return {
+                factor,
+                values: Array.from(counts, ([key, value]) => ({ key, value }))
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 5)
+            };
+        });
+
+        renderChart(groupedData);
+    };
+
+    const renderChart = (groupedData) => {
+        const margin = { top: 50, right: 20, bottom: 150, left: 50 };
+        const width = 1500 - margin.left - margin.right;
+        const height = 600 - margin.top - margin.bottom;
+
+        d3.select("#chart").html("");
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+                        .on("click", function (event) {
+                if (event.target.tagName !== "rect") {
+                    d3.selectAll(".group").classed("faded", false).classed("selected", false);
+                    d3.selectAll("rect").attr("fill", "#d3d3d3");
+                    d3.select("#legend").html("");
+                    details.html("");
+                }
+            })
+            .append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        const allKeys = new Set(groupedData.flatMap(d => d.values.map(v => v.key)));
+
+const x0 = d3.scaleBand()
+    .domain(groupedData.map(d => d.factor))
+    .range([0, width])
+    .padding(0.2);
+
+const x1 = d3.scaleBand()
+    .domain([...allKeys])
+    .range([0, x0.bandwidth()])
+    .padding(0.1);
+
+const y = d3.scaleLinear()
+    .domain([0, d3.max(groupedData, d => d3.max(d.values, v => v.value))])
+    .nice()
+    .range([height, 0]);
+
+const color = d3.scaleOrdinal(d3.schemePastel2);
+
+const groups = svg.selectAll("g.group")
+    .data(groupedData)
+    .join("g")
+    .attr("class", "group")
+    .attr("transform", d => `translate(${x0(d.factor)}, 0)`);
+
+groups.selectAll("rect")
+    .data(d => {
+        const keys = [...allKeys];
+        return keys.map(key => {
+            const found = d.values.find(v => v.key === key);
+            return { key, value: found ? found.value : 0 };
+        });
+    })
+    .join("rect")
+    .attr("x", d => x1(d.key))
+    .attr("y", height)
+    .attr("width", x1.bandwidth())
+    .attr("height", 0)
+    .attr("fill", "#d3d3d3")
+    .on("mouseover", function (event, d) {
+        tooltip.style("display", "block")
+            .html(`<strong>名稱:</strong> ${d.key}<br><strong>次數:</strong> ${d.value}`)
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY + 10}px`);
+    })
+    .on("mouseout", function () {
+        tooltip.style("display", "none");
+    })
+            .on("click", function (event, d) {
+                const groupData = d3.select(this.parentNode).datum();
+                details.html(`<strong>詳細內容:</strong><br>影響因子: ${groupData.factor}<br>名稱: ${d.key}<br>次數: ${d.value}`);
+                d3.selectAll("rect").attr("fill", "#d3d3d3");
+                d3.select(this.parentNode).selectAll("rect").transition().duration(500).attr("fill", d => color(d.key));
+                d3.selectAll(".group").classed("faded", true);
+                d3.select(this.parentNode).classed("faded", false);
+
+                const legend = d3.select("#legend").selectAll("div")
+                    .data(groupData.values)
+                    .join("div")
+                    .style("display", "inline-block")
+                    .style("margin-right", "20px")
+                    .html(d => `<span style='display:inline-block;width:12px;height:12px;background:${color(d.key)};margin-right:5px;'></span>${d.key}`);
+            })
+            .transition()
+            .duration((_, i) => 500 + i * 200)
+            .ease(d3.easeBounceOut)
+            .attr("y", d => y(d.value))
+            .attr("height", d => height - y(d.value));
+
+svg.append("g")
+    .call(d3.axisLeft(y));
+
+svg.append("g")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(x0))
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+    .style("text-anchor", "end");
+
+svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", -10)
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .text("Grouped Bar Chart - 車禍影響因子分析");
+
+svg.append("text")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left + 10)
+    .attr("transform", "rotate(-90)")
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .text("次數");
+
+svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", height + margin.bottom - 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .text("影響因子");
+};
+
+// Reset Filters
+const resetFilters = () => {
+    d3.selectAll("select").property("value", "");
+    d3.selectAll("input[type=checkbox]").property("checked", false);
+    d3.select("#chart").html("");
+    d3.select("#legend").html("");
+    details.html("");
+};
+
+d3.select("#applyFilters").on("click", loadAndFilterData);
+d3.select("#resetFilters").on("click", resetFilters);
+
+</script>
+
+</body>
+</html>
+

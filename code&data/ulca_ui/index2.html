@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>臺灣各縣市交通事故記錄之視覺化呈現</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #2c3e50;
+      color: #fff;
+      scroll-behavior: smooth;
+      opacity: 0;
+      animation: fadeInPage 1s ease-in-out forwards;
+    }
+
+    @keyframes fadeInPage {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .fade-in-left,
+    .fade-in-right {
+      opacity: 0;
+      transform: translateX(100px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .fade-in-left.show {
+      animation: slideInLeft 1s ease-out forwards;
+    }
+
+    .fade-in-right.show {
+      animation: slideInRight 1s ease-out forwards;
+    }
+
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 50px;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      animation: fadeInDown 1s ease-in-out;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    .header .buttons {
+      display: flex;
+      gap: 15px;
+      transition: transform 0.3s, background-color 0.3s;
+      cursor: pointer;
+    }
+
+    .header button {
+      background: #3498db;
+      border: none;
+      padding: 10px 20px;
+      color: #fff;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s;
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .header button:hover {
+      background: #2980b9;
+      transform: scale(1.1);
+    }
+
+
+    #section1 {
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+
+    #section1.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dynamic-buttons {
+      position: fixed;
+      top: 80px;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: center;
+      gap: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 0;
+      z-index: 900;
+    }
+
+    .dynamic-buttons.show {
+      display: flex;
+    }
+
+    .dynamic-buttons a {
+      text-decoration: none;
+      color: white;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: background-color 0.3s;
+      font-size: 0.9rem;
+      color: #2c3e50;
+      text-align: center;
+    }
+
+    .dynamic-buttons a:hover {
+      background-color: #ecf0f1;
+    }
+
+    .container {
+      width: 85%;
+      margin: 100px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .rounded-box {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      flex: 1;
+      color: #fff;
+      text-align: center;
+    }
+
+    .rounded-box h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .rounded-box p {
+      color: #fff;
+      line-height: 1.5;
+    }
+
+    iframe {
+      width: 100%;
+      height: 1000px;
+      /* 原高度 400px * 2.5 */
+      border: none;
+      border-radius: 15px;
+      background-color: #f5f5f5;
+      /* 設定淺灰色背景 */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .row {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .left-3 {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .right-7 {
+      flex: 7;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .button-group a {
+      text-decoration: none;
+      color: white;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: background-color 0.3s;
+      font-size: 0.9rem;
+      color: #2c3e50;
+      text-align: center;
+    }
+
+    .button-group a:hover {
+      background-color: #ecf0f1;
+    }
+
+    #section3 iframe {
+      height: 700px;
+    }
+
+
+    #section5 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 85%;
+      margin: 100px auto;
+    }
+
+    #section5 .rounded-box {
+      width: 100%;
+      margin-bottom: 0;
+    }
+
+
+    #section5 .iframe-container {
+      position: relative;
+      opacity: 0;
+      transform: translateX(100px);
+      transition: opacity 1s ease, transform 1s ease;
+      width: 100%;
+    }
+
+
+    #section5 .iframe-container.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+
+    #section5 iframe {
+      display: block;
+      width: 100%;
+      height: 1800px;
+      border: none;
+      border-radius: 15px;
+      background-color: #f5f5f5;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .footer {
+      background-color: #2c3e50;
+      color: #fff;
+      padding: 20px 50px;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    .footer-content a {
+      color: #3498db;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .footer-content a:hover {
+      color: #1abc9c;
+    }
+
+    .footer-note {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 12px;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>臺灣各縣市交通事故記錄之視覺化呈現</h1>
+    <div class="buttons">
+      <button onclick="location.href='index.html'">車禍潛在趨勢分析</button>
+      <button onclick="location.href='index2.html'">歷史資料視覺呈現</button>
+    </div>
+  </div>
+
+  <!-- Dynamic Buttons -->
+  <div class="dynamic-buttons" id="dynamic-buttons">
+    <a href="#section2">彌補結果缺陷</a>
+    <a href="#section3">過去資料紀錄</a>
+    <a href="#section5">詳細資料分析</a>
+  </div>
+
+  <!-- 第一畫面 -->
+  <div class="container" id="section1">
+    <div>
+      <br>
+      <br>
+      <br>
+      <p>
+        希望藉由這個頁面來彌補與紀錄，主畫面中數據表達上的缺失，以及更多資料不同面向的內容。<br><br>
+        期待使用者可以藉由本網站中的多個圖表相輔相成，並且利用多種互動式的功能與設計，找到自己對於本主題的疑惑之處，同時獲得數據與統計上得支持。<br><br>
+        亦期待利用視覺化技術，將臺灣各縣市過去以及未來的交通事故數據，進行多維度分析和呈現，幫助識別大大小小潛在生活周遭的危險路段和高事故發生時間。<br><br>
+        進而提供一般人對交通事故預防，以及政府對交通政策制定的實證支持。透過空間和時間的視覺化分析，我們可以更直觀地了解事故的發生規律，並針對特定區域或時間段進行深入研究，從而提高交通安全。
+      </p>
+    </div>
+    <div class="button-group">
+      <a href="#section2">彌補結果缺陷</a>
+      <a href="#section3">過去資料紀錄</a>
+      <a href="#section5">詳細資料分析</a>
+    </div>
+  </div>
+
+  <!-- 第二畫面 -->
+  <div class="container fade-in-left" id="section2">
+    <div class="row">
+      <div class="left-3">
+
+        <h2>車禍種類與時間的關係呈現</h2><br><br>
+
+        <h3><u><strong>圖表類型：</strong>zoomable-circle-packing</h3><br><br></u>
+
+        <p>
+          我們可以從這張圖片中直觀地觀察出，哪種車禍類型發生的次數最多，發生越多次的圓圈則越大。<br><br>
+
+          期待利用這張圖表去觀察，特定車禍種類，會不會在某個季節月份，發生的次數會比較多？<br><br>
+
+          亦期待點擊月份時，可以觀察是否因為統計量的緣故，受某些特定年份的極端值影響，導致該月結果特別突出或偏低？
+          <br><br>
+          因為這個圖表的大小特性，我們可以不用知道實際的資料數據，用直觀地觀察圓圈的大小，甚至不用點擊到最深處，便可得知有沒有明顯的差距或不同！（例如：哪一個月或年圓圈特大或特小）
+          <br><br>
+        </p>
+
+      </div>
+      <div class="right-7">
+        <iframe src="index2_chart_1/index.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第三畫面 -->
+  <div class="container fade-in-right" id="section3">
+    <div class="row">
+      <div class="right-7">
+        <iframe src="index2_chart_2/index.html"></iframe>
+      </div>
+      <div class="left-3">
+
+        <h2>時間、縣市與車禍種類的紀錄</h2><br><br>
+
+        <h3><u><strong>圖表類型：</strong>Heiarchical Graph Chart</h3></u><br><br>
+
+
+        我們可以直觀地去點擊想知道的資料內容，從年份到月份，再點擊相關的縣市，就可以快速查詢特定時間，該縣市的各項車禍種類發生的頻率與次數！<br><br>
+
+        亦可觀察每年的車禍次數是否上升，而觀察每年哪些月份最常發生車禍。<br><br>
+
+        鑑於台灣各個縣市人口分布不均，並沒有做彼此之間的比較或地圖上的呈現；因為直轄市的結果一定密集且最多，這樣的視覺化無法呈現目標。<br><br>
+
+        因此，我們反而期待讓使用者藉由好奇，去記憶在意或剛查詢的結果，來以此利用互動效果來觀察和獲得結論。<br><br>
+
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 第五畫面 -->
+  <div id="section5">
+    <div class="rounded-box fade-in-left">
+
+      <h2>特定時間與地區的車禍種類發生的變因統計呈現</h2><br><br>
+
+      <h3><u><strong>圖表類型：</strong>Grouped bar chart</u></h3><br><br>
+
+      使用者可以篩選特地年月份和地區的資料，並選擇最為好奇的三者車禍類型（與主畫面的降維數量相同），並勾選最為在意的關鍵變因（最多五個）。<br><br>
+
+      下圖將會呈現這些變因，在特定的時間地點與車禍類型下，其中細項的次數統計，並利用視覺化的互動效果，可以點擊特定長條圖了解更多詳細資訊。（每項變因至多顯示前五名）。<br><br>
+
+      藉此可以了解這些因素在該車禍種類下，是什麼情況最容易發生車禍；亦可搭配主畫面的降維圖表，了解發生哪些車禍的種類情況中，主要需要關心的變因是什麼？及其細項是什麼？藉由這樣的結果，就可以知道這些車禍在特定情況下發生的機率與頻率最高，具有潛在趨勢，需要加以小心。<br><br>
+
+
+
+
+
+    </div>
+    <div class="iframe-container">
+      <iframe src="index2_chart_3/index.html"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const fadeElements = document.querySelectorAll(
+      '.fade-in-left, .fade-in-right, .iframe-container, #section1'
+    );
+
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('show');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+
+    fadeElements.forEach(el => observer.observe(el));
+
+
+    const dynamicButtons = document.getElementById('dynamic-buttons');
+    const headerHeight = document.querySelector('.header').offsetHeight;
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > document.getElementById('section1').offsetHeight) {
+        dynamicButtons.classList.add('show');
+      } else {
+        dynamicButtons.classList.remove('show');
+      }
+    });
+
+
+    document.querySelectorAll('.dynamic-buttons a, .button-group a').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const targetSection = document.querySelector(this.getAttribute('href'));
+        const offset = headerHeight + 60;
+        const topPosition = targetSection.getBoundingClientRect().top + window.pageYOffset - offset;
+
+        window.scrollTo({
+          top: topPosition,
+          behavior: 'smooth',
+        });
+      });
+    });
+
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const targetSection = document.querySelector(hash);
+        if (targetSection) {
+          const offset = headerHeight + 60;
+          const topPosition = targetSection.getBoundingClientRect().top + window.pageYOffset - offset;
+
+          setTimeout(() => {
+            window.scrollTo({
+              top: topPosition,
+              behavior: 'smooth',
+            });
+          }, 100);
+        }
+      }
+    });
+
+
+  </script>
+  <div class="footer-note">111304019 統計三 林承佑<br>107703027 資科四 崔賢燮</div>
+</body>
+<footer class="footer">
+  <div class="footer-content">
+    <p>
+      資料來源：政府資料公開平台 -
+      <a href="https://data.gov.tw/datasets/search?p=1&size=10&s=_score_desc&rft=交通事故" target="_blank">
+        2023~2018年全台灣A1, A2交通事故
+      </a>
+  </div>
+</footer>
+
+</html>

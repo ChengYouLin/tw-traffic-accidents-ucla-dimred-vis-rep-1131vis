@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taiwan Map with CSV Points</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+
+        #map { 
+            height: 93vh;
+            width: 76vh;
+        }
+
+        .container {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            margin: 20px;
+        }
+    
+        .map-container {
+            display: flex;
+            width: 1000px;
+            height: 1000px;
+            margin: 20px;
+            border: 2px solid #333;
+            background-color: white;
+        }
+
+        .custom-popup {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    
+    <div class="controls">
+        <label>
+          發生年度:
+          <select id="發生年度">
+            <option value="">發生年度</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+          </select>
+        </label>
+  
+        <label>
+            發生月份:
+          <select id="發生月份">
+            <option value="">發生月份</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+        </label>
+  
+        <div>
+          <label>
+            事故類型及型態子類別名稱:
+            <select id="事故類型及型態子類別名稱">
+                <option value="">-- 事故類型及型態子類別名稱 --</option>
+                <option value="追撞">追撞</option>
+                <option value="撞交通島">撞交通島</option>
+                <option value="撞路樹、電桿">撞路樹、電桿</option>
+                <option value="其他">其他</option>
+                <option value="穿越道路中">穿越道路中</option>
+                <option value="側撞">側撞</option>
+                <option value="衝出路外">衝出路外</option>
+                <option value="同向擦撞">同向擦撞</option>
+                <option value="對撞">對撞</option>
+                <option value="同向通行中">同向通行中</option>
+                <option value="路口交岔撞">路口交岔撞</option>
+                <option value="路上翻車、摔倒">路上翻車、摔倒</option>
+                <option value="對向擦撞">對向擦撞</option>
+                <option value="撞護欄(樁)">撞護欄(樁)</option>
+                <option value="對向通行中">對向通行中</option>
+                <option value="撞橋樑、建築物">撞橋樑、建築物</option>
+                <option value="在路上作業中">在路上作業中</option>
+                <option value="撞號誌、標誌桿">撞號誌、標誌桿</option>
+                <option value="倒車撞">倒車撞</option>
+                <option value="佇立路邊(外)">佇立路邊(外)</option>
+                <option value="衝進路中">衝進路中</option>
+                <option value="撞非固定設施">撞非固定設施</option>
+                <option value="衝過(或撞壞)遮斷器">衝過(或撞壞)遮斷器</option>
+                <option value="在路上嬉戲">在路上嬉戲</option>
+                <option value="從停車後(或中)穿出">從停車後(或中)穿出</option>
+                <option value="撞動物">撞動物</option>
+            </select>
+          </label>
+            <button onclick="filterData()">click</button>
+        </div>
+
+    
+    <div id="map"></div>
+
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <script>
+        
+        var map = L.map('map').setView([23.7, 121.0], 9);
+
+        // OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+
+        function addPoint(lat, lng, data) {
+            var marker = L.circleMarker([lat, lng], {
+                radius: 5,
+                color: 'blue',
+                fillColor: 'blue',
+                fillOpacity: 0.8
+            })
+            .bindPopup(`<div class="custom-popup">
+                縣市：${data["縣市"]}<br>
+                天候名稱：${data["天候名稱"]}<br>
+                租借資訊：${data["光線名稱"]}<br>
+                速限.第1當事者：${data["速限.第1當事者"]}<br>
+                車道劃分設施.分向設施大類別名稱：${data["車道劃分設施.分向設施大類別名稱"]}<br>
+                道路型態子類別名稱：${data["道路型態子類別名稱"]}<br>
+                事故位置子類別名稱：${data["事故位置子類別名稱"]}<br>
+                路面狀況.路面鋪裝名稱：${data["路面狀況.路面鋪裝名稱"]}<br>
+            </div>`)
+            .addTo(map);
+        }
+
+
+        let globalData = [];
+        const csvFiles = ["107_0.csv", "108_0.csv", "109_0.csv", "110_0.csv", "111_0.csv", "112_0.csv"];
+
+        async function loadCSVFiles(files) {
+            for (let file of files) {
+                await new Promise((resolve, reject) => {
+                    Papa.parse(file, {
+                        download: true,
+                        header: true,
+                        complete: function(results) {
+                            globalData.push(...results.data.filter(row => row["經度"] && row["緯度"]));
+                            resolve();
+                        },
+                        error: reject
+                    });
+                });
+            }
+            renderMap(globalData);
+        }
+
+        function renderMap(data) {
+            map.eachLayer(layer => {
+                if (layer instanceof L.CircleMarker) {
+                    map.removeLayer(layer);
+                }
+            });
+            data.forEach(row => addPoint(parseFloat(row["緯度"]), parseFloat(row["經度"]), row));
+        }
+
+        function filterData() {
+            const year = document.getElementById('發生年度').value;
+            const month = document.getElementById('發生月份').value;
+            const region = document.getElementById('事故類型及型態子類別名稱').value;
+
+            const filteredData = globalData.filter(d => 
+                (!year || d["發生年度"] === year) &&
+                (!month || d["發生月份"] === month) &&
+                (!region || d["事故類型及型態子類別名稱"] === region)
+            );
+            renderMap(filteredData);
+        }
+
+        loadCSVFiles(csvFiles).catch(console.error);
+    </script>
+</body>
+</html>

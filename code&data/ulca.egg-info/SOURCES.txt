@@ -1,0 +1,17 @@
+LICENSE
+setup.py
+./sample.py
+./manopt_dr/__init__.py
+./manopt_dr/core.py
+./manopt_dr/predefined_func_generator.py
+./ulca/__init__.py
+./ulca/ulca.py
+./ulca_ui/__init__.py
+./ulca_ui/plot.py
+./ulca_ui/utils/geom_trans.py
+./ulca_ui/utils/weight_opt.py
+ulca.egg-info/PKG-INFO
+ulca.egg-info/SOURCES.txt
+ulca.egg-info/dependency_links.txt
+ulca.egg-info/requires.txt
+ulca.egg-info/top_level.txt
