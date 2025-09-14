@@ -1,8 +1,37 @@
-## 臺灣各縣市交通事故記錄之視覺化呈現
+# 1131 資訊視覺化－學碩合開－臺灣各縣市交通事故記錄之視覺化呈現
 
-111304019 統計三 林承佑
-107703027 資科四 崔賢燮
+- 111304019 統計三 林承佑
+- 107703027 資科四 崔賢燮
 
+## [實作Demo影片](https://drive.google.com/file/d/18bDBz2X5XvVVvFeRK9Ki32B22umGOVwv/view)
+
+
+這份專案中，我們實作在IEEE上的[Interactive Dimensionality Reduction for Comparative Analysis](https://arxiv.org/abs/2106.15481)這篇paper的視覺化實作。
+
+[![My Skills](https://skillicons.dev/icons?i=d3,js,html,css,vscode,nodejs)](https://skillicons.dev)
+
+- 研究目標 － ULCA : unified linear comparative analysis
+  - 一種降維方法，找到一組線性組合，組合間相關性為零Linear indepdently
+  - 目標是在保持數據主要結構的同時消除冗餘信息。
+  - 結合PCA、cPCA、LDA的主要概念並優化
+  - 以致可以同時處理連續和類別的資料內容
+
+透過空間和時間的視覺化分析，我們可以更直觀地了解事故的發生規律，並針對特定區域或時間段進行深入研究，從而提高交通安全。
+- why:主要目標是發現交通事故數據中的潛在模式和趨勢。
+- what:時間序列數據, 地理空間數據, 類別和數值型資料
+- how:時間序列圖, 分層設色圖...等，以及ULCA的互動式降維操作，如篩選與過濾（Filter）, 縮放與平移（Zoom and Pan）等。
+
+***
+
+在這份專案中，我實作了：
+- 整體網站的畫面編排架設，與互動式體驗，包含呈現邏輯以達到研究目標。
+- 各項圖表的規劃和設計
+- 資料集整理和前處理
+- ULCA降維度視覺化圖片實現（python程式碼實作）
+
+***
+
+![圖片](docs/G9.png)
 
 Setup
 -----
