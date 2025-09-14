@@ -3,7 +3,7 @@
 - 111304019 統計三 林承佑
 - 107703027 資科四 崔賢燮
 
-## [實作Demo影片](https://drive.google.com/file/d/18bDBz2X5XvVVvFeRK9Ki32B22umGOVwv/view)
+## [實作Demo影片](https://youtu.be/iBJqcMneuXs)
 
 
 這份專案中，我們實作在IEEE上的[Interactive Dimensionality Reduction for Comparative Analysis](https://arxiv.org/abs/2106.15481)這篇paper的視覺化實作。
